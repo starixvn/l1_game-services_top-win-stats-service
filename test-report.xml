@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+  <file path="D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js">
+    <testCase name="bearer authenticator test autoUpdateToken should calls updateToken" duration="1">
+      <failure message="ReferenceError: spyOn is not defined"><![CDATA[ReferenceError: spyOn is not defined
+    at Object.<anonymous> (D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js:30:7)
+    at Promise.then.completed (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at _runTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)]]></failure>
+    </testCase>
+    <testCase name="bearer authenticator test autoUpdateToken should calls setTimeout" duration="1">
+      <failure message="ReferenceError: spyOn is not defined"><![CDATA[ReferenceError: spyOn is not defined
+    at Object.<anonymous> (D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js:42:7)
+    at Promise.then.completed (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at _runTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)]]></failure>
+    </testCase>
+    <testCase name="bearer authenticator test refresh should calls setTimeout" duration="0">
+      <failure message="ReferenceError: spyOn is not defined"><![CDATA[ReferenceError: spyOn is not defined
+    at Object.<anonymous> (D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js:57:7)
+    at Promise.then.completed (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at _runTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)]]></failure>
+    </testCase>
+    <testCase name="bearer authenticator test refresh when token expired should calls update token" duration="0">
+      <failure message="ReferenceError: spyOn is not defined"><![CDATA[ReferenceError: spyOn is not defined
+    at Object.<anonymous> (D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js:70:9)
+    at Promise.then.completed (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at _runTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)]]></failure>
+    </testCase>
+    <testCase name="bearer authenticator test updateToken when normal should get bearer token" duration="0">
+      <failure message="ReferenceError: spyOn is not defined"><![CDATA[ReferenceError: spyOn is not defined
+    at Object.<anonymous> (D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js:88:9)
+    at Promise.then.completed (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at _runTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)]]></failure>
+    </testCase>
+    <testCase name="bearer authenticator test updateToken when have exception should log error" duration="0">
+      <failure message="ReferenceError: spyOn is not defined"><![CDATA[ReferenceError: spyOn is not defined
+    at Object.<anonymous> (D:\Lumi\round-watcher-service\tests\helpers\bearer-authenticator.test.js:106:9)
+    at Promise.then.completed (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at _runTest (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)
+    at _runTestsForDescribeBlock (D:\Lumi\round-watcher-service\node_modules\jest-circus\build\run.js:60:9)]]></failure>
+    </testCase>
+    <testCase name="bearer authenticator test isTokenExpired when expired is null should returns true" duration="1"/>
+    <testCase name="bearer authenticator test isTokenExpired when expired is undefined should returns true" duration="0"/>
+  </file>
+</testExecutions>

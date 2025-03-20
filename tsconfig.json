@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "rootDir": "src",
+    "outDir": "lib",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceRoot": "/src",
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "allowJs": true,
+    "noImplicitAny": false,
+    "checkJs": false,
+    "module": "ES2022",
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "removeComments": true,
+    "extendedDiagnostics": true,
+    "exactOptionalPropertyTypes": true,
+    "diagnostics": true,
+    "strictPropertyInitialization": false
+  },
+  "compileOnSave": true,
+  "include": ["src/**/*"],
+  "exclude": ["**/node_modules/**/*"],
+  "ts-node": {
+    "experimentalSpecifierResolution": "node",
+    "esm": true
+  }
+}
