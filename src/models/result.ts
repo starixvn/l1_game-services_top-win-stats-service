@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { getResultCollection, getTopResultArchiveCollection } from "../constants";
+import { getResultCollection } from "../constants";
 
 export interface IResult extends Document {
   roundId: number;

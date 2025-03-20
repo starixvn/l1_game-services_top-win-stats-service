@@ -22,16 +22,4 @@ const getTopRoundCollectionName = (gameName: string, timeFrame: string) => {
   return `${gameName}_top_round_${timeFrame}`;
 };
 
-const getTopResultArchiveCollection = (gameName: string, timeFrame: string) => {
-  return `${gameName}_top_result_archive_${timeFrame}`;
-};
-
-export {
-  getRoundCollection,
-  getResultCollection,
-  getBetLogCollection,
-  getTopRoundCollectionName,
-  getTopResultArchiveCollection,
-  OperationType,
-  getSupportedGames,
-};
+export { getRoundCollection, getResultCollection, getBetLogCollection, getTopRoundCollectionName, OperationType, getSupportedGames };

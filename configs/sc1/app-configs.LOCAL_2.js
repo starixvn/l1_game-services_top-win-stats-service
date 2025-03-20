@@ -1,7 +1,7 @@
 export default {
   enabledLogs: true,
   database: {
-    url: "mongodb://svc_readonly:svcReadonly@10.10.50.12:39102,10.10.50.13:39102,10.10.50.14:39102/?replicaSet=L1ppLocal&appName=roundwatcher",
+    url: "mongodb://lmn_backend:LmnBackend@10.10.50.12:39102,10.10.50.13:39102,10.10.50.14:39102/?replicaSet=L1ppLocal&appName=roundwatcher",
     options: {
       dbName: "minigame",
     },

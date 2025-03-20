@@ -2,20 +2,10 @@ export default {
   hostingPort: 5000,
   enabledLogs: true,
   database: {
-    url: "mongodb://lmn_backend:LmnBackend@10.10.50.12:39100,10.10.50.13:39100,10.10.50.14:39100/?replicaSet=L1Local&appName=gameroundmonitorservice",
+    url: "mongodb://lmn_backend:LmnBackend@10.10.50.12:39103,10.10.50.13:39103,10.10.50.14:39103/?replicaSet=L1pppLocal&appName=roundwatcher",
     options: {
       dbName: "minigame",
     },
-  },
-  notificationApiSettings: {
-    url: "http://localhost:8004/api",
-    auth: {
-      url: "https://auth.lumigame.com",
-      id: "game-services",
-      secret: "gameservices@20luminet&",
-      useAuthenticate: true,
-    },
-    requestTimeout: 10000,
   },
   adminApiSettings: {
     url: "http://localhost:7778/api",
