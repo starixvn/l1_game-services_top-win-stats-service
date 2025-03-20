@@ -97,7 +97,8 @@ export class TopResultsHandler {
     );
 
     if (wasUpdated) {
-      results.unshift(newResult);
+      results.push(newResult);
+      results.sort((a, b) => b.result.result - a.result.result);
       if (results.length > this.MAX_TOP_RESULTS) {
         results.pop();
       }
