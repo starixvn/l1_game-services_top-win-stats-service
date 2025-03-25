@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { getBetLogCollection } from "../constants";
+import { getBetLogCollectionName, getTempBetLogCollectionName } from "../constants";
 
 export interface IBetLog extends Document {
   uid: string;
@@ -45,4 +45,9 @@ const betLogSchema = new Schema({
   roundId: { type: Number, default: 0, required: true },
 });
 
-export default (gameConfigName: string) => mongoose.model<IBetLog>(getBetLogCollection(gameConfigName), betLogSchema);
+const getTempBetLogCollection = (gameConfigName: string) =>
+  mongoose.model<IBetLog>(getTempBetLogCollectionName(gameConfigName), betLogSchema);
+
+const getBetLogCollection = (gameConfigName: string) => mongoose.model<IBetLog>(getBetLogCollectionName(gameConfigName), betLogSchema);
+
+export { getTempBetLogCollection, getBetLogCollection };

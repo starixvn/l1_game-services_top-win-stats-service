@@ -26,5 +26,15 @@ export default class Router {
       const topResults = await this.watcherManager.getMonthlyTopResults(request.query.gameId);
       reply.code(200).send(topResults);
     });
+
+    fastify.get("/yearly-top-cashout", async (request: FastifyRequest<{ Querystring: QueryParams }>, reply: FastifyReply) => {
+      const topCashout = await this.watcherManager.getYearlyTopCashout(request.query.gameId);
+      reply.code(200).send(topCashout);
+    });
+
+    fastify.get("/monthly-top-cashout", async (request: FastifyRequest<{ Querystring: QueryParams }>, reply: FastifyReply) => {
+      const topCashout = await this.watcherManager.getMonthlyTopCashout(request.query.gameId);
+      reply.code(200).send(topCashout);
+    });
   }
 }

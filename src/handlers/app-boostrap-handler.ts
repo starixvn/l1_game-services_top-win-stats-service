@@ -12,6 +12,7 @@ export default class AppBoostrapHandler {
     const supportedGames = getSupportedGames();
 
     await this.watcherManager.loadLatestTopResults();
+    await this.watcherManager.loadLatestTopCashout();
     supportedGames.forEach((game) => this.watcherManager.addWatcher(game));
   }
 }

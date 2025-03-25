@@ -4,7 +4,7 @@ import { TopResultsHandler } from "./handlers/top-result-handler";
 import WatcherEventHandler from "./handlers/watcher-event-handler";
 import Router from "./routes";
 import WatcherManager from "./watchers/watcher-manager";
-
+import { TopCashoutHandler } from "./handlers/top-cashout-handler";
 export class ContainerRegistry {
   container: AwilixContainer;
 
@@ -24,6 +24,7 @@ export class ContainerRegistry {
 
   registerHandlers() {
     this.container.register({ topResultsHandler: asClass(TopResultsHandler).singleton() });
+    this.container.register({ topCashoutHandler: asClass(TopCashoutHandler).singleton() });
     this.container.register({ appBoostrapHandler: asClass(AppBoostrapHandler).singleton() });
   }
 

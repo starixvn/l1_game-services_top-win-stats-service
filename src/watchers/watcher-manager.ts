@@ -1,5 +1,6 @@
 import { getSupportedGames } from "../constants";
 import { TopResultsHandler } from "../handlers/top-result-handler";
+import { TopCashoutHandler } from "../handlers/top-cashout-handler";
 import WatcherEventHandler from "../handlers/watcher-event-handler";
 import { GameConfig } from "../types";
 import RoundBaseGameWatcher from "./round-base-game-watcher";
@@ -8,10 +9,12 @@ export default class WatcherManager {
   private readonly watchers: { [key: string]: RoundBaseGameWatcher } = {};
   private readonly watcherEventHandler: WatcherEventHandler;
   private readonly topResultsHandler: TopResultsHandler;
+  private readonly topCashoutHandler: TopCashoutHandler;
 
-  constructor(watcherEventHandler: WatcherEventHandler, topResultsHandler: TopResultsHandler) {
+  constructor(watcherEventHandler: WatcherEventHandler, topResultsHandler: TopResultsHandler, topCashoutHandler: TopCashoutHandler) {
     this.watcherEventHandler = watcherEventHandler;
     this.topResultsHandler = topResultsHandler;
+    this.topCashoutHandler = topCashoutHandler;
   }
 
   addWatcher(game: GameConfig) {
@@ -31,9 +34,22 @@ export default class WatcherManager {
     return this.topResultsHandler.getYearlyTopResults(gameId);
   }
 
+  async getMonthlyTopCashout(gameId: string) {
+    return this.topCashoutHandler.getMonthlyTopCashout(gameId);
+  }
+
+  async getYearlyTopCashout(gameId: string) {
+    return this.topCashoutHandler.getYearlyTopCashout(gameId);
+  }
+
   async loadLatestTopResults() {
     const supportedGames = getSupportedGames();
     await this.topResultsHandler.loadTopResults(supportedGames);
+  }
+
+  async loadLatestTopCashout() {
+    const supportedGames = getSupportedGames();
+    await this.topCashoutHandler.loadTopCashout(supportedGames);
   }
 
   async removeWatcher(gameId: string) {

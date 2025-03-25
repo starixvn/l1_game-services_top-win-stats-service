@@ -14,12 +14,29 @@ const getResultCollection = (gameName: string) => {
   return `${gameName}_results`;
 };
 
-const getBetLogCollection = (gameName: string) => {
+const getBetLogCollectionName = (gameName: string) => {
   return `${gameName}_betlogs`;
+};
+
+const getTempBetLogCollectionName = (gameName: string) => {
+  return `${gameName}_tmpbetlogs`;
 };
 
 const getTopRoundCollectionName = (gameName: string, timeFrame: string) => {
   return `${gameName}_top_round_${timeFrame}`;
 };
 
-export { getRoundCollection, getResultCollection, getBetLogCollection, getTopRoundCollectionName, OperationType, getSupportedGames };
+const getTopCashoutPointCollectionName = (gameName: string, timeFrame: string) => {
+  return `${gameName}_top_cashout_point_${timeFrame}`;
+};
+
+export {
+  getRoundCollection,
+  getResultCollection,
+  getBetLogCollectionName,
+  getTempBetLogCollectionName,
+  getTopRoundCollectionName,
+  getTopCashoutPointCollectionName,
+  OperationType,
+  getSupportedGames,
+};
