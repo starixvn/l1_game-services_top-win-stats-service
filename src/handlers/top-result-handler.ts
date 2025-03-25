@@ -89,18 +89,21 @@ export class TopResultsHandler {
 
   private async updateTimeframe(gameConfigName: string, timeFrame: TimeFrame, gameId: string, newResult: TopResult): Promise<void> {
     const results = this.topResults[gameId][timeFrame];
-    const wasUpdated = await this.updateTopResult(
+
+    await this.removeOutdatedRecords(gameId, timeFrame, getTopRoundCollection(gameConfigName, timeFrame));
+
+    const insertedCount = await this.updateTopResult(
       gameConfigName,
       timeFrame,
-      newResult,
+      [newResult],
       results.map((r) => r.result)
     );
 
-    if (wasUpdated) {
+    if (insertedCount > 0) {
       results.push(newResult);
       results.sort((a, b) => b.result.result - a.result.result);
       if (results.length > this.MAX_TOP_RESULTS) {
-        results.pop();
+        results.splice(this.MAX_TOP_RESULTS);
       }
     }
   }
@@ -134,24 +137,53 @@ export class TopResultsHandler {
     };
   }
 
+  private async removeOutdatedRecords(gameId: string, timeFrame: TimeFrame, model: any): Promise<void> {
+    const dateLimit = this.getDateLimit(timeFrame);
+
+    await model.deleteMany({
+      time: { $lt: dateLimit },
+    });
+
+    if (this.topResults[gameId]?.[timeFrame]) {
+      this.topResults[gameId][timeFrame] = this.topResults[gameId][timeFrame].filter((r) => r.timestamp >= dateLimit);
+    }
+  }
+
   private async updateTopResult(
     gameConfigName: string,
     timeFrame: TimeFrame,
-    newResult: TopResult,
+    newResults: TopResult[],
     previousRounds: TopGameRound[]
-  ): Promise<boolean> {
-    const position = previousRounds.findIndex((r) => r.result <= newResult.result.result);
+  ): Promise<number> {
+    const combinedResults = [...previousRounds, ...newResults.map((r) => r.result)];
+    combinedResults.sort((a, b) => b.result - a.result);
 
-    if (previousRounds.length < this.MAX_TOP_RESULTS || position !== -1) {
-      try {
-        await this.saveTopResult(gameConfigName, timeFrame, newResult.result, previousRounds);
-        return true;
-      } catch (err) {
-        logger.logError(`Failed to update top-round-${timeFrame}:`, err);
-        return false;
+    const topResults = combinedResults.slice(0, this.MAX_TOP_RESULTS);
+
+    const previousRoundIds = new Set(previousRounds.map((r) => r.id));
+    const newItems = topResults.filter((result) => !previousRoundIds.has(result.id));
+
+    if (newItems.length > 0) {
+      const topRoundModel = getTopRoundCollection(gameConfigName, timeFrame);
+
+      if (previousRounds.length >= this.MAX_TOP_RESULTS) {
+        const bottomResults = previousRounds.sort((a, b) => b.result - a.result).slice(-newItems.length);
+
+        await topRoundModel.deleteMany({
+          id: { $in: bottomResults.map((r) => r.id) },
+        });
+      }
+
+      for (const item of newItems) {
+        try {
+          await this.saveTopResult(gameConfigName, timeFrame, item, previousRounds);
+        } catch (err) {
+          logger.logError(`Failed to update top-round-${timeFrame} for result:`, err);
+        }
       }
     }
-    return false;
+
+    return newItems.length;
   }
 
   private async saveTopResult(
@@ -162,21 +194,9 @@ export class TopResultsHandler {
   ): Promise<void> {
     const topRoundModel = getTopRoundCollection(gameConfigName, timeFrame);
     const fullResult = await gameResult(gameConfigName).findOne({ roundId: newRound.id }, { _id: false, _v: false }).lean().exec();
+
     newRound.provablyFair = fullResult as IResult;
-
-    await this.cleanupOldRecords(timeFrame, topRoundModel, previousRounds);
     await topRoundModel.create(newRound);
-  }
-
-  private async cleanupOldRecords(timeFrame: TimeFrame, model: any, previousRounds: TopGameRound[]): Promise<void> {
-    const timeLimit = this.getDateLimit(timeFrame);
-    await model.deleteMany({ time: { $lt: timeLimit } });
-
-    const currentCount = await model.countDocuments();
-    if (currentCount >= this.MAX_TOP_RESULTS) {
-      const lastRound = previousRounds[this.MAX_TOP_RESULTS - 1];
-      await model.deleteOne({ id: lastRound.id });
-    }
   }
 
   private cleanupOldResults(): void {
