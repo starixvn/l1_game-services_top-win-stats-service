@@ -35,11 +35,11 @@ export default class WatcherManager {
   }
 
   async getMonthlyTopCashout(gameId: string) {
-    return this.topCashoutHandler.getMonthlyTopCashout(gameId);
+    return this.topCashoutHandler.getMonthlyTopCashout(gameId).map((result) => ({ ...result, operatorId: undefined }));
   }
 
   async getYearlyTopCashout(gameId: string) {
-    return this.topCashoutHandler.getYearlyTopCashout(gameId);
+    return this.topCashoutHandler.getYearlyTopCashout(gameId).map((result) => ({ ...result, operatorId: undefined }));
   }
 
   async loadLatestTopResults() {

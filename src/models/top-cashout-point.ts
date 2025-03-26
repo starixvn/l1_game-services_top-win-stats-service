@@ -7,11 +7,13 @@ export interface TopCashoutPoint extends Document {
   crashPoint: number;
   uid: string;
   name: string;
-  operatorId: string;
+  operatorId: string | undefined;
   currency: string;
   time: Date;
   roundId: number;
   provablyFair?: IResult;
+  betAmount: number;
+  winAmount: number;
 }
 
 const topCashoutPointSchema = new Schema<TopCashoutPoint>({
@@ -24,6 +26,8 @@ const topCashoutPointSchema = new Schema<TopCashoutPoint>({
   time: { type: Date, required: true },
   roundId: { type: Number, required: true },
   provablyFair: { type: Object },
+  betAmount: { type: Number, required: true },
+  winAmount: { type: Number, required: true },
 });
 
 export const getTopCashoutPointCollection = (gameConfigName: string, timeFrame: string) =>

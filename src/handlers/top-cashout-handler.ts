@@ -89,6 +89,8 @@ export class TopCashoutHandler {
         currency: log.currency,
         time: log.time,
         roundId: log.roundId,
+        betAmount: log.amount,
+        winAmount: log.winAmount,
       })) as TopCashoutPoint[];
 
       await this.updateTimeframes(gameName, gameId, topCashoutPoint);
