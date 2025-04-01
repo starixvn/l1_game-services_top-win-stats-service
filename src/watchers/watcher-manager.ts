@@ -35,11 +35,11 @@ export default class WatcherManager {
   }
 
   async getMonthlyTopCashout(gameId: string) {
-    return this.topCashoutHandler.getMonthlyTopCashout(gameId).map((result) => ({ ...result, operatorId: undefined }));
+    return this.topCashoutHandler.getMonthlyTopResults(gameId).map((result) => ({ ...result, operatorId: undefined }));
   }
 
   async getYearlyTopCashout(gameId: string) {
-    return this.topCashoutHandler.getYearlyTopCashout(gameId).map((result) => ({ ...result, operatorId: undefined }));
+    return this.topCashoutHandler.getYearlyTopResults(gameId).map((result) => ({ ...result, operatorId: undefined }));
   }
 
   async loadLatestTopResults() {
@@ -49,7 +49,7 @@ export default class WatcherManager {
 
   async loadLatestTopCashout() {
     const supportedGames = getSupportedGames();
-    await this.topCashoutHandler.loadTopCashout(supportedGames);
+    await this.topCashoutHandler.loadTopResults(supportedGames);
   }
 
   async removeWatcher(gameId: string) {

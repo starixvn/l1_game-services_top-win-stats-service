@@ -1,68 +1,42 @@
 import { GameRound } from "../models/game-rounds";
 import { TopGameRound, getTopRoundCollection } from "../models/top-round-results";
-import { gameResult } from "../models/result";
-import { GameConfig } from "../types";
+import { BaseTopHandler, TimeFrame, TIME_FRAMES } from "./base-top-handler";
 import { logger } from "sc-common";
 import { getSupportedGames } from "../constants";
+import { gameResult } from "../models/result";
 
-const TIME_FRAMES = {
-  MONTHLY: "monthly",
-  YEARLY: "yearly",
-} as const;
-
-type TimeFrame = (typeof TIME_FRAMES)[keyof typeof TIME_FRAMES];
-
-interface TimeFrameResults {
-  [TIME_FRAMES.MONTHLY]: TopGameRound[];
-  [TIME_FRAMES.YEARLY]: TopGameRound[];
-}
-
-export class TopResultsHandler {
-  private topResults: { [key: string]: TimeFrameResults } = {};
-  private readonly MAX_TOP_RESULTS = 50;
-
-  async loadTopResults(gameConfigs: Array<GameConfig>): Promise<void> {
-    try {
-      await Promise.all(gameConfigs.map((game) => this.loadGameTopResults(game)));
-    } catch (err) {
-      logger.logError("Failed to load top results:", err);
-    }
-  }
-
-  private async loadGameTopResults(game: GameConfig): Promise<void> {
-    const [monthly, yearly] = await Promise.all([
-      this.fetchTimeframeResults(game.name, TIME_FRAMES.MONTHLY),
-      this.fetchTimeframeResults(game.name, TIME_FRAMES.YEARLY),
-    ]);
-
-    this.topResults[game.id] = {
-      [TIME_FRAMES.MONTHLY]: monthly,
-      [TIME_FRAMES.YEARLY]: yearly,
-    };
-  }
-
+export class TopResultsHandler extends BaseTopHandler<TopGameRound> {
   async updateTopResults(gameId: string, round: GameRound): Promise<void> {
     try {
       const gameName = getSupportedGames().find((g) => g.id === +gameId)?.name;
       if (!gameName) return;
 
       await this.ensureTopResultsInitialized(gameId);
-
       const topRound = this.convertToTopRound(round);
-
       await this.updateTimeframes(gameName, gameId, topRound);
     } catch (err) {
       logger.logError(`Failed to update top results for gameId ${gameId}:`, err);
     }
   }
 
-  private async ensureTopResultsInitialized(gameId: string): Promise<void> {
-    if (!this.topResults[gameId]) {
-      this.topResults[gameId] = {
-        [TIME_FRAMES.MONTHLY]: [],
-        [TIME_FRAMES.YEARLY]: [],
-      };
-    }
+  protected async fetchTimeframeResults(gameConfigName: string, timeFrame: TimeFrame): Promise<TopGameRound[]> {
+    const fromDate = this.getDateLimit(timeFrame);
+    const topRounds = getTopRoundCollection(gameConfigName, timeFrame);
+
+    return topRounds
+      .find({ time: { $gte: fromDate } }, { _id: false, _v: false })
+      .sort({ result: -1 })
+      .limit(this.MAX_TOP_RESULTS)
+      .lean()
+      .exec();
+  }
+
+  private convertToTopRound(round: GameRound): TopGameRound {
+    return {
+      id: round.id,
+      result: round.result,
+      time: round.time,
+    } as TopGameRound;
   }
 
   private async updateTimeframes(gameConfigName: string, gameId: string, newResult: TopGameRound): Promise<void> {
@@ -74,30 +48,8 @@ export class TopResultsHandler {
 
   private async updateTimeframe(gameConfigName: string, timeFrame: TimeFrame, gameId: string, newResult: TopGameRound): Promise<void> {
     const results = this.topResults[gameId][timeFrame];
-
-    this.topResults[gameId][timeFrame] = await this.updateTopResult(gameConfigName, timeFrame, newResult, results);
-  }
-
-  private async fetchTimeframeResults(gameConfigName: string, timeFrame: TimeFrame): Promise<TopGameRound[]> {
-    const fromDate = this.getDateLimit(timeFrame);
-    const topRounds = getTopRoundCollection(gameConfigName, timeFrame);
-
-    const rounds = await topRounds
-      .find({ time: { $gte: fromDate } }, { _id: false, _v: false })
-      .sort({ result: -1 })
-      .limit(this.MAX_TOP_RESULTS)
-      .lean()
-      .exec();
-
-    return rounds;
-  }
-
-  private convertToTopRound(round: GameRound): TopGameRound {
-    return {
-      id: round.id,
-      result: round.result,
-      time: round.time,
-    } as TopGameRound;
+    const updatedItems = await this.updateTopResult(gameConfigName, timeFrame, newResult, results);
+    this.topResults[gameId][timeFrame] = updatedItems;
   }
 
   private async updateTopResult(
@@ -111,7 +63,7 @@ export class TopResultsHandler {
       .sort((a, b) => b.result - a.result)
       .slice(0, this.MAX_TOP_RESULTS);
 
-    const addItem = newTopResults.find((r) => r.id == newResult.id);
+    const addItem = newTopResults.find((r) => r.id === newResult.id);
     const removeItems = previousRounds.filter((r) => !newTopResults.includes(r));
 
     await this.updateTopRoundDB(gameConfigName, timeFrame, addItem, removeItems);
@@ -139,35 +91,5 @@ export class TopResultsHandler {
         })),
       });
     }
-  }
-
-  private getDateLimit(timeFrame: TimeFrame): Date {
-    const date = new Date();
-    if (timeFrame === TIME_FRAMES.MONTHLY) {
-      date.setMonth(date.getMonth() - 1);
-    } else {
-      date.setFullYear(date.getFullYear() - 1);
-    }
-    return date;
-  }
-
-  getMonthlyTopResults(gameId: string): TopGameRound[] {
-    return this.getTimeframeResults(gameId, TIME_FRAMES.MONTHLY);
-  }
-
-  getYearlyTopResults(gameId: string): TopGameRound[] {
-    return this.getTimeframeResults(gameId, TIME_FRAMES.YEARLY);
-  }
-
-  private getTimeframeResults(gameId: string, timeFrame: TimeFrame): TopGameRound[] {
-    return this.topResults[gameId]?.[timeFrame] || [];
-  }
-
-  remove(gameId: string): void {
-    delete this.topResults[gameId];
-  }
-
-  clear(): void {
-    this.topResults = {};
   }
 }
