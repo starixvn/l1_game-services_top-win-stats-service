@@ -3,7 +3,7 @@ import { TopGameRound, getTopRoundCollection } from "../models/top-round-results
 import { BaseTopHandler, TimeFrame, TIME_FRAMES } from "./base-top-handler";
 import { logger } from "sc-common";
 import { getSupportedGames } from "../constants";
-import { gameResult } from "../models/result";
+import { gameResult, IResult } from "../models/result";
 
 export class TopResultsHandler extends BaseTopHandler<TopGameRound> {
   async updateTopResults(gameId: string, round: GameRound): Promise<void> {
@@ -80,8 +80,9 @@ export class TopResultsHandler extends BaseTopHandler<TopGameRound> {
     const topRoundModel = getTopRoundCollection(gameConfigName, timeFrame);
 
     if (addItem) {
-      const pf = await gameResult(gameConfigName).find({ roundId: addItem?.id }, { _id: false, _v: false }).lean().exec();
-      await topRoundModel.create({ ...addItem, provablyFair: pf });
+      const pf = (await gameResult(gameConfigName).findOne({ roundId: addItem?.id }, { _id: false, _v: false }).lean().exec()) as IResult;
+      addItem.provablyFair = pf;
+      await topRoundModel.create(addItem);
     }
 
     if (removeItems.length > 0) {

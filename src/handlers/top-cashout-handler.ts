@@ -4,7 +4,7 @@ import { getTempBetLogCollection, getBetLogCollection } from "../models/bet-logs
 import { BaseTopHandler, TimeFrame, TIME_FRAMES } from "./base-top-handler";
 import { logger } from "sc-common";
 import { getSupportedGames } from "../constants";
-import { gameResult } from "../models/result";
+import { gameResult, IResult } from "../models/result";
 
 export class TopCashoutHandler extends BaseTopHandler<TopCashoutPoint> {
   async updateTopResults(gameId: string, round: GameRound): Promise<void> {
@@ -110,8 +110,9 @@ export class TopCashoutHandler extends BaseTopHandler<TopCashoutPoint> {
     const roundId = addItems[0]?.roundId;
 
     if (addItems.length > 0) {
-      const pf = await gameResult(gameConfigName).find({ roundId }, { _id: false, _v: false }).lean().exec();
-      await topCashoutPointModel.insertMany(addItems.map((item) => ({ ...item, provablyFair: pf })));
+      const pf = (await gameResult(gameConfigName).findOne({ roundId }, { _id: false, _v: false }).lean().exec()) as IResult;
+      addItems.forEach((item) => (item.provablyFair = pf));
+      await topCashoutPointModel.insertMany(addItems);
     }
 
     if (removeItems.length > 0) {
