@@ -1,6 +1,6 @@
 import { GameRound } from "../models/game-rounds";
 import { TopGameRound, getTopRoundCollection } from "../models/top-round-results";
-import { gameResult, IResult } from "../models/result";
+import { gameResult } from "../models/result";
 import { GameConfig } from "../types";
 import { logger } from "sc-common";
 import { getSupportedGames } from "../constants";
@@ -12,28 +12,14 @@ const TIME_FRAMES = {
 
 type TimeFrame = (typeof TIME_FRAMES)[keyof typeof TIME_FRAMES];
 
-interface TopResult {
-  result: TopGameRound;
-  timestamp: Date;
-}
-
 interface TimeFrameResults {
-  [TIME_FRAMES.MONTHLY]: TopResult[];
-  [TIME_FRAMES.YEARLY]: TopResult[];
+  [TIME_FRAMES.MONTHLY]: TopGameRound[];
+  [TIME_FRAMES.YEARLY]: TopGameRound[];
 }
 
 export class TopResultsHandler {
   private topResults: { [key: string]: TimeFrameResults } = {};
   private readonly MAX_TOP_RESULTS = 50;
-
-  constructor() {
-    this.startCleanupInterval();
-  }
-
-  private startCleanupInterval() {
-    const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000;
-    setInterval(() => this.cleanupOldResults(), CLEANUP_INTERVAL);
-  }
 
   async loadTopResults(gameConfigs: Array<GameConfig>): Promise<void> {
     try {
@@ -63,9 +49,8 @@ export class TopResultsHandler {
       await this.ensureTopResultsInitialized(gameId);
 
       const topRound = this.convertToTopRound(round);
-      const newTopResult = this.createTopResult(topRound);
 
-      await this.updateTimeframes(gameName, gameId, newTopResult);
+      await this.updateTimeframes(gameName, gameId, topRound);
     } catch (err) {
       logger.logError(`Failed to update top results for gameId ${gameId}:`, err);
     }
@@ -80,35 +65,20 @@ export class TopResultsHandler {
     }
   }
 
-  private async updateTimeframes(gameConfigName: string, gameId: string, newResult: TopResult): Promise<void> {
+  private async updateTimeframes(gameConfigName: string, gameId: string, newResult: TopGameRound): Promise<void> {
     await Promise.all([
       this.updateTimeframe(gameConfigName, TIME_FRAMES.MONTHLY, gameId, newResult),
       this.updateTimeframe(gameConfigName, TIME_FRAMES.YEARLY, gameId, newResult),
     ]);
   }
 
-  private async updateTimeframe(gameConfigName: string, timeFrame: TimeFrame, gameId: string, newResult: TopResult): Promise<void> {
+  private async updateTimeframe(gameConfigName: string, timeFrame: TimeFrame, gameId: string, newResult: TopGameRound): Promise<void> {
     const results = this.topResults[gameId][timeFrame];
 
-    await this.removeOutdatedRecords(gameId, timeFrame, getTopRoundCollection(gameConfigName, timeFrame));
-
-    const insertedCount = await this.updateTopResult(
-      gameConfigName,
-      timeFrame,
-      [newResult],
-      results.map((r) => r.result)
-    );
-
-    if (insertedCount > 0) {
-      results.push(newResult);
-      results.sort((a, b) => b.result.result - a.result.result);
-      if (results.length > this.MAX_TOP_RESULTS) {
-        results.splice(this.MAX_TOP_RESULTS);
-      }
-    }
+    this.topResults[gameId][timeFrame] = await this.updateTopResult(gameConfigName, timeFrame, newResult, results);
   }
 
-  private async fetchTimeframeResults(gameConfigName: string, timeFrame: TimeFrame): Promise<TopResult[]> {
+  private async fetchTimeframeResults(gameConfigName: string, timeFrame: TimeFrame): Promise<TopGameRound[]> {
     const fromDate = this.getDateLimit(timeFrame);
     const topRounds = getTopRoundCollection(gameConfigName, timeFrame);
 
@@ -119,7 +89,7 @@ export class TopResultsHandler {
       .lean()
       .exec();
 
-    return rounds.map((round) => this.createTopResult(round));
+    return rounds;
   }
 
   private convertToTopRound(round: GameRound): TopGameRound {
@@ -130,86 +100,45 @@ export class TopResultsHandler {
     } as TopGameRound;
   }
 
-  private createTopResult(round: TopGameRound): TopResult {
-    return {
-      result: round,
-      timestamp: new Date(),
-    };
-  }
-
-  private async removeOutdatedRecords(gameId: string, timeFrame: TimeFrame, model: any): Promise<void> {
-    const dateLimit = this.getDateLimit(timeFrame);
-
-    await model.deleteMany({
-      time: { $lt: dateLimit },
-    });
-
-    if (this.topResults[gameId]?.[timeFrame]) {
-      this.topResults[gameId][timeFrame] = this.topResults[gameId][timeFrame].filter((r) => r.timestamp >= dateLimit);
-    }
-  }
-
   private async updateTopResult(
     gameConfigName: string,
     timeFrame: TimeFrame,
-    newResults: TopResult[],
+    newResult: TopGameRound,
     previousRounds: TopGameRound[]
-  ): Promise<number> {
-    const combinedResults = [...previousRounds, ...newResults.map((r) => r.result)];
-    combinedResults.sort((a, b) => b.result - a.result);
+  ): Promise<TopGameRound[]> {
+    const newTopResults = [...previousRounds, newResult]
+      .filter((result) => result.time >= this.getDateLimit(timeFrame))
+      .sort((a, b) => b.result - a.result)
+      .slice(0, this.MAX_TOP_RESULTS);
 
-    const topResults = combinedResults.slice(0, this.MAX_TOP_RESULTS);
+    const addItem = newTopResults.find((r) => r.id == newResult.id);
+    const removeItems = previousRounds.filter((r) => !newTopResults.includes(r));
 
-    const previousRoundIds = new Set(previousRounds.map((r) => r.id));
-    const newItems = topResults.filter((result) => !previousRoundIds.has(result.id));
+    await this.updateTopRoundDB(gameConfigName, timeFrame, addItem, removeItems);
 
-    if (newItems.length > 0) {
-      const topRoundModel = getTopRoundCollection(gameConfigName, timeFrame);
-
-      if (previousRounds.length >= this.MAX_TOP_RESULTS) {
-        const bottomResults = previousRounds.sort((a, b) => b.result - a.result).slice(-newItems.length);
-
-        await topRoundModel.deleteMany({
-          id: { $in: bottomResults.map((r) => r.id) },
-        });
-      }
-
-      for (const item of newItems) {
-        try {
-          await this.saveTopResult(gameConfigName, timeFrame, item, previousRounds);
-        } catch (err) {
-          logger.logError(`Failed to update top-round-${timeFrame} for result:`, err);
-        }
-      }
-    }
-
-    return newItems.length;
+    return newTopResults;
   }
 
-  private async saveTopResult(
+  private async updateTopRoundDB(
     gameConfigName: string,
     timeFrame: TimeFrame,
-    newRound: TopGameRound,
-    previousRounds: TopGameRound[]
+    addItem: TopGameRound | undefined,
+    removeItems: TopGameRound[]
   ): Promise<void> {
     const topRoundModel = getTopRoundCollection(gameConfigName, timeFrame);
-    const fullResult = await gameResult(gameConfigName).findOne({ roundId: newRound.id }, { _id: false, _v: false }).lean().exec();
 
-    newRound.provablyFair = fullResult as IResult;
-    await topRoundModel.create(newRound);
-  }
+    if (addItem) {
+      const pf = await gameResult(gameConfigName).find({ roundId: addItem?.id }, { _id: false, _v: false }).lean().exec();
+      await topRoundModel.create({ ...addItem, provablyFair: pf });
+    }
 
-  private cleanupOldResults(): void {
-    Object.keys(this.topResults).forEach((gameId) => {
-      Object.entries({
-        [TIME_FRAMES.MONTHLY]: this.getDateLimit(TIME_FRAMES.MONTHLY),
-        [TIME_FRAMES.YEARLY]: this.getDateLimit(TIME_FRAMES.YEARLY),
-      }).forEach(([timeFrame, dateLimit]) => {
-        this.topResults[gameId][timeFrame as TimeFrame] = this.topResults[gameId][timeFrame as TimeFrame].filter(
-          (r) => r.timestamp >= dateLimit
-        );
+    if (removeItems.length > 0) {
+      await topRoundModel.deleteMany({
+        $or: removeItems.map((item) => ({
+          id: item.id,
+        })),
       });
-    });
+    }
   }
 
   private getDateLimit(timeFrame: TimeFrame): Date {
@@ -231,7 +160,7 @@ export class TopResultsHandler {
   }
 
   private getTimeframeResults(gameId: string, timeFrame: TimeFrame): TopGameRound[] {
-    return (this.topResults[gameId]?.[timeFrame] || []).map((tr) => tr.result);
+    return this.topResults[gameId]?.[timeFrame] || [];
   }
 
   remove(gameId: string): void {

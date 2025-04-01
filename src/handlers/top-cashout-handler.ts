@@ -1,7 +1,7 @@
 import { GameRound } from "../models/game-rounds";
 import { TopCashoutPoint, getTopCashoutPointCollection } from "../models/top-cashout-point";
 import { getTempBetLogCollection, getBetLogCollection } from "../models/bet-logs";
-import { gameResult, IResult } from "../models/result";
+import { gameResult } from "../models/result";
 import { GameConfig } from "../types";
 import { logger } from "sc-common";
 import { getSupportedGames } from "../constants";
@@ -21,15 +21,6 @@ interface TimeFrameResults {
 export class TopCashoutHandler {
   private topResults: { [key: string]: TimeFrameResults } = {};
   private readonly MAX_TOP_RESULTS = 50;
-
-  constructor() {
-    this.startCleanupInterval();
-  }
-
-  private startCleanupInterval() {
-    const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000;
-    setInterval(() => this.cleanupOldResults(), CLEANUP_INTERVAL);
-  }
 
   async loadTopCashout(gameConfigs: Array<GameConfig>): Promise<void> {
     try {
@@ -124,13 +115,7 @@ export class TopCashoutHandler {
     const results = this.topResults[gameId][timeFrame];
     const updatedItems = await this.updateTopCashout(gameConfigName, timeFrame, newResults, results);
 
-    if (updatedItems.length > 0) {
-      results.push(...updatedItems);
-      results.sort((a, b) => b.cashoutPoint - a.cashoutPoint);
-      if (results.length > this.MAX_TOP_RESULTS) {
-        results.splice(this.MAX_TOP_RESULTS, results.length - this.MAX_TOP_RESULTS);
-      }
-    }
+    this.topResults[gameId][timeFrame] = updatedItems;
   }
 
   private async fetchTimeframeResults(gameConfigName: string, timeFrame: TimeFrame): Promise<TopCashoutPoint[]> {
@@ -147,83 +132,50 @@ export class TopCashoutHandler {
     return cashoutPoints as TopCashoutPoint[];
   }
 
-  private async removeOutdatedRecords(timeFrame: TimeFrame, model: any, previousRounds: TopCashoutPoint[]): Promise<TopCashoutPoint[]> {
-    const dateLimit = this.getDateLimit(timeFrame);
-
-    await model.deleteMany({
-      time: { $lt: dateLimit },
-    });
-
-    return previousRounds.filter((round) => round.time >= dateLimit);
-  }
-
-  private async cleanupOldRecords(
+  private async updateTopCashoutDB(
+    gameConfigName: string,
     timeFrame: TimeFrame,
-    model: any,
-    previousRounds: TopCashoutPoint[],
-    numberOfItemsToRemove: number
+    addItems: TopCashoutPoint[],
+    removeItems: TopCashoutPoint[]
   ): Promise<void> {
-    previousRounds = await this.removeOutdatedRecords(timeFrame, model, previousRounds);
+    const topCashoutPointModel = getTopCashoutPointCollection(gameConfigName, timeFrame);
+    const roundId = addItems[0].roundId;
+    const pf = await gameResult(gameConfigName).find({ roundId }, { _id: false, _v: false }).lean().exec();
 
-    if (previousRounds.length >= this.MAX_TOP_RESULTS) {
-      const bottomResults = previousRounds.sort((a, b) => b.cashoutPoint - a.cashoutPoint).slice(-numberOfItemsToRemove);
+    await topCashoutPointModel.insertMany(addItems.map((item) => ({ ...item, provablyFair: pf })));
 
-      if (bottomResults.length > 0) {
-        await model.deleteMany({
-          roundId: { $in: bottomResults.map((r) => r.roundId) },
-        });
-      }
-    }
+    await topCashoutPointModel.deleteMany({
+      $or: removeItems.map((item) => ({
+        roundId: item.roundId,
+        uid: item.uid,
+        cashoutPoint: item.cashoutPoint,
+      })),
+    });
   }
 
   private async updateTopCashout(
     gameConfigName: string,
     timeFrame: TimeFrame,
-    newResults: TopCashoutPoint[],
-    previousRounds: TopCashoutPoint[]
+    newCashOutPoints: TopCashoutPoint[],
+    currentTopCashOutPoints: TopCashoutPoint[]
   ): Promise<TopCashoutPoint[]> {
-    const combinedResults = [...previousRounds, ...newResults];
-    combinedResults.sort((a, b) => b.cashoutPoint - a.cashoutPoint);
+    const combinedResults = [...currentTopCashOutPoints, ...newCashOutPoints];
+    const newTopResults = combinedResults
+      .filter((result) => result.time >= this.getDateLimit(timeFrame))
+      .sort((a, b) => b.cashoutPoint - a.cashoutPoint)
+      .slice(0, this.MAX_TOP_RESULTS);
 
-    const topResults = combinedResults.slice(0, this.MAX_TOP_RESULTS);
+    const addItems = newTopResults.filter(
+      (result) =>
+        !currentTopCashOutPoints.some((r) => r.roundId === result.roundId && r.cashoutPoint === result.cashoutPoint && r.uid === result.uid)
+    );
+    const removeItems = currentTopCashOutPoints.filter(
+      (result) => !newTopResults.some((r) => r.roundId === result.roundId && r.cashoutPoint === result.cashoutPoint && r.uid === result.uid)
+    );
 
-    const previousRoundIds = new Set(previousRounds.map((r) => r.roundId));
-    const newItems = topResults.filter((result) => !previousRoundIds.has(result.roundId));
+    await this.updateTopCashoutDB(gameConfigName, timeFrame, addItems, removeItems);
 
-    if (newItems.length > 0) {
-      const topCashoutPointModel = getTopCashoutPointCollection(gameConfigName, timeFrame);
-
-      await this.cleanupOldRecords(timeFrame, topCashoutPointModel, previousRounds, newItems.length);
-
-      await this.saveTopResult(gameConfigName, timeFrame, newItems, topCashoutPointModel);
-    }
-
-    return newItems;
-  }
-
-  private async saveTopResult(gameConfigName: string, timeFrame: TimeFrame, results: TopCashoutPoint[], model: any): Promise<void> {
-    const roundId = results[0].roundId;
-    const pf = await gameResult(gameConfigName).find({ roundId }, { _id: false, _v: false }).lean().exec();
-
-    const newRecords = results.map((result) => ({
-      ...result,
-      provablyFair: pf,
-    }));
-
-    await model.insertMany(newRecords);
-  }
-
-  private cleanupOldResults(): void {
-    Object.keys(this.topResults).forEach((gameId) => {
-      Object.entries({
-        [TIME_FRAMES.MONTHLY]: this.getDateLimit(TIME_FRAMES.MONTHLY),
-        [TIME_FRAMES.YEARLY]: this.getDateLimit(TIME_FRAMES.YEARLY),
-      }).forEach(([timeFrame, dateLimit]) => {
-        this.topResults[gameId][timeFrame as TimeFrame] = this.topResults[gameId][timeFrame as TimeFrame].filter(
-          (r) => r.time >= dateLimit
-        );
-      });
-    });
+    return newTopResults;
   }
 
   private getDateLimit(timeFrame: TimeFrame): Date {
