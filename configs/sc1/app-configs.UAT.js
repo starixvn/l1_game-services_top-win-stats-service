@@ -11,7 +11,7 @@ export default {
   },
   sentry: {
     sentryUrl: "http://52368c4019044019885440599c180bda@10.2.190.51:9009/2",
-    logIdentifier: "round-watcher-service",
+    logIdentifier: "top-win-stats-service",
     env: "UAT",
   },
   metrics: {

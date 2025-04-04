@@ -4,7 +4,6 @@ import { logger } from "sc-common";
 import appConfigs from "./app-configs";
 import { ContainerRegistry } from "./container-registry";
 import AppBoostrapHandler from "./handlers/app-boostrap-handler";
-import authenticationHelper from "./helpers/authentication-helper";
 import Router from "./routes";
 import { configureDatabase } from "./helpers/configure-db";
 

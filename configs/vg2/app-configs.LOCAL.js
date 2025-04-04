@@ -11,7 +11,7 @@ export default {
   },
   sentry: {
     sentryUrl: "https://acb36eb835d948d68c1aad9873754d51@sentry.lumigame.com/27",
-    logIdentifier: "round-watcher-service",
+    logIdentifier: "top-win-stats-service",
     env: "LOCAL",
   },
   metrics: {

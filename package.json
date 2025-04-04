@@ -2,7 +2,7 @@
   "name": "rtp-checker-service",
   "version": "1.0.0",
   "main": "src/app.ts",
-  "repository": "https://git3.nexdev.net/l1/round-watcher-service.git",
+  "repository": "https://git3.nexdev.net/l1/top-win-stats-service.git",
   "author": "SC",
   "license": "MIT",
   "type": "module",

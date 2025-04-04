@@ -41,10 +41,12 @@ export default class RoundBaseGameWatcher extends EventEmitter {
   }
 
   handleChangeStreamError(error: Error) {
+    console.log(error);
     logger.logError(error);
   }
 
   handleChangeStreamClosed() {
+    console.log(`Change Stream for ${this.gameConfig.name} has been closed!!`);
     logger.logWarning(`Change Stream for ${this.gameConfig.name} has been closed!!`);
   }
 
