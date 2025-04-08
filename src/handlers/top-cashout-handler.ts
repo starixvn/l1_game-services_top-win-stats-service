@@ -51,6 +51,7 @@ export class TopCashoutHandler extends BaseTopHandler<TopCashoutPoint> {
           roundId: log.roundId,
           betAmount: log.amount,
           winAmount: log.winAmount,
+          rate: log.rate,
         } as TopCashoutPoint)
     );
   }

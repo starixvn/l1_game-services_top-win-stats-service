@@ -14,6 +14,7 @@ export interface TopCashoutPoint extends Document {
   provablyFair?: IResult;
   betAmount: number;
   winAmount: number;
+  rate: number;
 }
 
 const topCashoutPointSchema = new Schema<TopCashoutPoint>({
@@ -28,6 +29,7 @@ const topCashoutPointSchema = new Schema<TopCashoutPoint>({
   provablyFair: { type: Object },
   betAmount: { type: Number, required: true },
   winAmount: { type: Number, required: true },
+  rate: { type: Number, required: true },
 });
 
 export const getTopCashoutPointCollection = (gameConfigName: string, timeFrame: string) =>
